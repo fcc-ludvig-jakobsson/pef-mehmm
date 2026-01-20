@@ -1,13 +1,10 @@
-suppressPackageStartupMessages({
-  library(tidyverse)
-  library(arm)
-  library(reshape2)
-  library(parallel)
-  library(matrixStats)
-  library(zoo)
-  library(minpack.lm)
-}
-)
+library(tidyverse)
+library(arm)
+library(reshape2)
+library(parallel)
+library(matrixStats)
+library(zoo)
+library(minpack.lm)
 
 simulate_two_state_model <- function(T, x_i, mu, beta, omega, dose_types, inv_g, log_pef=FALSE) {
   # Compute means based on assumed dose-response
