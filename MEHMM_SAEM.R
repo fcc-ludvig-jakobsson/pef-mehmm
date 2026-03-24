@@ -5,6 +5,7 @@ library(parallel)
 library(matrixStats)
 library(zoo)
 library(minpack.lm)
+library(mvtnorm)
 
 simulate_two_state_model <- function(T, x_i, mu, beta, omega, dose_types, inv_g, log_pef=FALSE) {
   # Compute means based on assumed dose-response
