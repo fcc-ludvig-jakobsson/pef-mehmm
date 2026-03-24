@@ -516,44 +516,21 @@ info_matrix_estimation <- function(x_i,mu,beta,omega,MCMC_samples_i,dose_types,e
   return(info_matrix_i)
 }
 
-IMP_log_likelihood <- function(data_i, x_i, M, mu, beta, omega, dose_types, est_params, inv_g, log_pef=FALSE) {
+IMP_log_likelihood <- function(MCMC_samples_i) {
   
   log_sum_exp <- function(v) {
     max <- max(v)
     return(max + log(sum(exp(v-max))))
   }
   
-  loc <- numeric(5)
-  loc[-est_params] <- mu[-est_params]
-  for (i in 1:length(est_params)) {
-    c <- est_params[i]
-    if (dose_types[i] == 'none') {
-      loc[c] = mu[c]
-    }
-    else if ( dose_types[i] == 'const') {
-      loc[c] <- mu[c] + beta[[c]]*as.numeric(x_i > 0)
-    }
-    else if (dose_types[i] == 'categorical') {
-      beta_bin <- append(beta[[c]], 0, after=0)
-      loc[c] <- mu[c] + beta_bin[x_i+1]
-    } 
-    else if (dose_types[i] == 'linear') {
-      loc[c] <- mu[c] + beta[[c]]*x_i
-    }
-    else if (dose_types[i] == 'emax') {
-      emax <- beta[[c]][1]
-      ed50 <- exp(beta[[c]][2])
-      loc[c] <- mu[c] + emax*x_i / (ed50+x_i)
-    }
-  }
+  proposal_mean <- colMeans(MCMC_samples_i$phi_i)
+  proposal_cov <- cov(MCMC_samples_i$phi_i)
   
-  scale <- sqrt(omega)
+  M <- nrow(MCMC_samples_i$phi_i)
   
-  phi_samples <- matrix(rnorm(5*M, loc, scale),nrow=M,byrow=T)
+  log_w <- sapply(1:M, function(m) MCMC_samples_i$log_likelihood[m] - dmvt(MCMC_samples_i$phi_i[m,], delta=proposal_mean, sigma=proposal_cov, df=5, log=T))
   
-  log_Z <- sapply(1:M, function(m) forward_algorithm(data_i,inv_g(phi_samples[m,]))$log_Z, log_pef=log_pef)
-  
-  log_likelihood <- log_sum_exp(log_Z) - log(M)
+  log_likelihood <- log_sum_exp(log_w) - log(M)
   
   return(log_likelihood)
 }
